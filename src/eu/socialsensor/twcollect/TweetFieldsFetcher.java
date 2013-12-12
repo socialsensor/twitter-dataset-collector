@@ -33,10 +33,10 @@ public class TweetFieldsFetcher {
 			response = Jsoup.connect(twitterURL).execute();
 		} catch (HttpStatusException e) {
 			System.err.println(twitterURL);
-			return createResponse(null, e.getStatusCode(), time0, false);
+			return createResponse(new TweetFields(tweetId, null, null, null), e.getStatusCode(), time0, false);
 		} catch (IOException e) {
 			e.printStackTrace();
-			return createOtherErrorResponse(time0);
+			return createOtherErrorResponse(tweetId, time0);
 		}
 		
 		// parsing the returned HTML code
@@ -45,7 +45,7 @@ public class TweetFieldsFetcher {
 			doc = response.parse();
 		} catch (IOException e) {
 			e.printStackTrace();
-			return createParseErrorResponse(time0);
+			return createParseErrorResponse(tweetId, time0);
 		}
 		
 		// extract username
@@ -55,8 +55,8 @@ public class TweetFieldsFetcher {
 		Elements textEl = doc.select(".js-tweet-text");
 		if (textEl == null || textEl.first() == null){
 			// is the user suspension the only reason for getting a null text?
-			System.err.println(twitterURL + " " + username);
-			return createResponse(null, response.statusCode(), time0, true);
+			System.err.println(twitterURL + " (suspeneded)");
+			return createResponse(new TweetFields(tweetId, null, null, null), response.statusCode(), time0, true);
 		}
 		String text = textEl.first().text();
 		
@@ -86,10 +86,10 @@ public class TweetFieldsFetcher {
 	private TweetFieldsResponse createResponse(TweetFields tweetFields, int status, long time0, boolean suspended){
 		return new TweetFieldsResponse(tweetFields, status, (int)(System.currentTimeMillis() - time0), suspended, false, false);
 	}
-	private TweetFieldsResponse createParseErrorResponse(long time0){
-		return new TweetFieldsResponse(null, -1, (int)(System.currentTimeMillis() - time0), false, true, false);
+	private TweetFieldsResponse createParseErrorResponse(String tweetId, long time0){
+		return new TweetFieldsResponse(new TweetFields(tweetId, null, null, null), -1, (int)(System.currentTimeMillis() - time0), false, true, false);
 	}
-	private TweetFieldsResponse createOtherErrorResponse(long time0){
-		return new TweetFieldsResponse(null, -1, (int)(System.currentTimeMillis() - time0), false, false, true);
+	private TweetFieldsResponse createOtherErrorResponse(String tweetId, long time0){
+		return new TweetFieldsResponse(new TweetFields(tweetId, null, null, null), -1, (int)(System.currentTimeMillis() - time0), false, false, true);
 	}
 }

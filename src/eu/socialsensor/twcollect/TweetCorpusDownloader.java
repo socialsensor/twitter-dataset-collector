@@ -29,8 +29,8 @@ public class TweetCorpusDownloader {
 
 	// very simple example of multi-threading downloading
 	public static void main(String[] args) {
-		String idFile = "tweets_200.txt";
-		String responseFile = "responses_200.txt";
+		String idFile = "tweets_27K.txt";
+		String responseFile = "responses.txt";
 		
 		try {
 			downloadIdsMultiThread(idFile, responseFile, true, 10);
@@ -122,6 +122,8 @@ public class TweetCorpusDownloader {
 		if (resume){
 			if ((new File(responsesLogFile)).exists()){
 				existingIds = TweetFieldsResponse.readIds(responsesLogFile);
+				System.out.println("Loaded " + existingIds.size() + " ids");
+				nrTweets -= existingIds.size(); // we are not going to count those as download tasks 
 			}
 		}
 		
@@ -142,9 +144,9 @@ public class TweetCorpusDownloader {
                 // if there are more tasks to submit and the downloader can accept more tasks then submit
                 while (submittedCounter < nrTweets && downloader.canAcceptMoreTasks()) {
                         String tweetId = reader.readLine();
-                        if (existingIds.contains(tweetId));
-                        downloader.submitTweetFetchTask(tweetId);
+                        if (existingIds.contains(tweetId)) { continue; }
                         submittedCounter++;
+                        downloader.submitTweetFetchTask(tweetId);
                 }
                 // if there are submitted tasks that are pending completion, try to consume
                 if (completedCounter + failedCounter < submittedCounter) {
@@ -154,9 +156,9 @@ public class TweetCorpusDownloader {
                         completedCounter++;
                         System.out.println(completedCounter + " downloads completed!");
                      } catch (Exception e) {
-                    	 failedCounter++;
-                         System.out.println(failedCounter + " downloads failed!");
-                         System.out.println(e.getMessage());
+                    	failedCounter++;
+                        System.out.println(failedCounter + " downloads failed!");
+                        System.out.println(e.getMessage());
                      }
                 }
                 // if all tasks have been consumed then break;

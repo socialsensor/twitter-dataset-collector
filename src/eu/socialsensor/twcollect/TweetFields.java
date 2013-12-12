@@ -67,7 +67,7 @@ public class TweetFields {
 	@Override
 	public String toString() {
 		// serialize in a single-line (check if tab is contained in text)
-		if (text.contains(SEPARATOR)){
+		if (text != null && text.contains(SEPARATOR)){
 			return id + SEPARATOR + username + SEPARATOR + 
 					text.replaceAll(SEPARATOR, TAB_ASCII) +
 					pubTime + SEPARATOR + numRetweets + SEPARATOR + numFavorites;

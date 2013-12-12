@@ -107,6 +107,9 @@ public class TweetFieldsResponse {
 	
 	// utility methods
 	
+	// reads only tweets that have been successfully downloaded
+	// as well as tweets that were removed or suspended (since there is no chance
+	// of them being downloaded)
 	public static Set<String> readIds(String responseLogFile){
 		BufferedReader reader = null;
 		try {
@@ -119,7 +122,10 @@ public class TweetFieldsResponse {
 		try {
 			while ((line = reader.readLine()) != null){
 				TweetFieldsResponse response = TweetFieldsResponse.fromString(line);
-				ids.add(response.getTweet().getId());
+				if (response.getTweet() != null && (!response.isOtherError()) 
+						&& (!response.isParseError())){
+					ids.add(response.getTweet().getId());
+				}
 			}
 			reader.close();
 		} catch (IOException e) {
@@ -151,7 +157,8 @@ public class TweetFieldsResponse {
 				TweetFieldsResponse response = TweetFieldsResponse.fromString(line);
 				nrResponses++;
 				
-				if (response.getTweet() != null){ countSuccess++; }
+				if ((!response.isSuspended()) && (!response.isParseError()) && 
+						(!response.isOtherError())){ countSuccess++; }
 				if (response.isSuspended()){ countSuspended++; }
 				if (response.isParseError()){ countParseErrors++; }
 				if (response.isOtherError()){ countOtherErrors++; }
