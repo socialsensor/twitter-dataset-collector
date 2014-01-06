@@ -122,8 +122,9 @@ public class TweetFieldsResponse {
 		try {
 			while ((line = reader.readLine()) != null){
 				TweetFieldsResponse response = TweetFieldsResponse.fromString(line);
-				if (response.getTweet() != null && (!response.isOtherError()) 
-						&& (!response.isParseError())){
+				if ((response.getStatus() == 200) || 
+						(response.getStatus() == 404) || 
+						response.isSuspended()){
 					ids.add(response.getTweet().getId());
 				}
 			}

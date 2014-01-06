@@ -3,11 +3,17 @@ package eu.socialsensor.twcollect;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -29,7 +35,7 @@ public class TweetCorpusDownloader {
 
 	// very simple example of multi-threading downloading
 	public static void main(String[] args) {
-		String idFile = "tweets_27K.txt";
+		String idFile = "tweets_200.txt";
 		String responseFile = "responses.txt";
 		
 		try {
@@ -51,6 +57,8 @@ public class TweetCorpusDownloader {
 		maxNumPendingTasks = nrThreads * 10;
 	}
 	
+	private static final String UTF8 = "UTF-8";
+	
 	
 	// idsFile: file with tweet IDs, one tweet ID per line
 	// responsesLogFile: file where responses will be logged - if it already exists, 
@@ -66,17 +74,21 @@ public class TweetCorpusDownloader {
 			e.printStackTrace();
 		}
 		
+		String tempOutput = responsesLogFile + ".tmp";
+				
 		Set<String> existingIds = new HashSet<String>();
 		if (resume){
 			if ((new File(responsesLogFile)).exists()){
 				existingIds = TweetFieldsResponse.readIds(responsesLogFile);
+				// copy "existingIds" lines to temporary output file
+				copyExistingIds(responsesLogFile, tempOutput, existingIds);
 			}
 		}
 		
 		BufferedWriter writer = null;
 		try {
 			writer = new BufferedWriter(
-					new OutputStreamWriter(new FileOutputStream(responsesLogFile, resume),"UTF-8"));
+					new OutputStreamWriter(new FileOutputStream(tempOutput, resume),UTF8));
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
@@ -101,6 +113,12 @@ public class TweetCorpusDownloader {
 			e.printStackTrace();
 		}
 		
+		// copy temporary file to original response file
+		try {
+			Files.move(Paths.get(tempOutput), Paths.get(responsesLogFile), StandardCopyOption.REPLACE_EXISTING);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	// same as above
@@ -118,19 +136,23 @@ public class TweetCorpusDownloader {
 		// reopen
 		reader = new BufferedReader(new FileReader(idsFile));
 		
+		String tempOutput = responsesLogFile + ".tmp";
+		
 		Set<String> existingIds = new HashSet<String>();
 		if (resume){
 			if ((new File(responsesLogFile)).exists()){
 				existingIds = TweetFieldsResponse.readIds(responsesLogFile);
 				System.out.println("Loaded " + existingIds.size() + " ids");
-				nrTweets -= existingIds.size(); // we are not going to count those as download tasks 
+				nrTweets -= existingIds.size(); // we are not going to count those as download tasks
+				// copy "existingIds" lines to temporary output file
+				copyExistingIds(responsesLogFile, tempOutput, existingIds);
 			}
 		}
-		
+				
 		TweetCorpusDownloader downloader = new TweetCorpusDownloader(nrThreads);
 		
 		// Not yet sure whether a ParallelWriter is really necessary.
-		File responseFile = new File(responsesLogFile);
+		File responseFile = new File(tempOutput);
 		ParallelWriter pwriter = new ParallelWriter(responseFile, resume);
 		new Thread(pwriter).start();
 		
@@ -175,6 +197,9 @@ public class TweetCorpusDownloader {
         System.out.println("Failed tweets: " + failedCounter);
 		
 		pwriter.end();
+		
+		// copy temporary file to original response file
+		Files.move(Paths.get(tempOutput), Paths.get(responsesLogFile), StandardCopyOption.REPLACE_EXISTING);
 	}
 	
 	
@@ -186,6 +211,36 @@ public class TweetCorpusDownloader {
 	
 	
 	// helper methods used by the multi-threading fetching method
+	
+	
+
+	protected static void copyExistingIds(String responseFile, String tempFile, Set<String> existingIds){
+		try {
+			BufferedReader outReader = new BufferedReader(new InputStreamReader(new FileInputStream(responseFile), UTF8));
+			BufferedWriter outWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(tempFile), UTF8));
+			
+			String line = null;
+			while ( (line = outReader.readLine()) != null) {
+				TweetFieldsResponse response = TweetFieldsResponse.fromString(line);
+				if (existingIds.contains(response.getTweet().getId())){
+					// if the id has been "properly" downloaded then copy it
+					outWriter.write(line);
+					outWriter.newLine();
+				}
+			}
+			
+			outReader.close();
+			outWriter.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (UnsupportedEncodingException e1) {
+			e1.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		
+	}
 	
 	
 	protected void submitTweetFetchTask(String tweetId) {
