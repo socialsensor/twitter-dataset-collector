@@ -7,6 +7,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -37,12 +38,30 @@ public class TweetCorpusDownloader {
 	public static void main(String[] args) {
 		String idFile = "tweets_200.txt";
 		String responseFile = "responses.txt";
-		
+
 		try {
 			downloadIdsMultiThread(idFile, responseFile, true, 10);
 		} catch (Exception e) {
 			e.printStackTrace();
+		}	
+	}
+	
+	// assumes that files ending with "txt" contain ids
+	protected static String[] getIdFiles(String idFileDirectory) {
+		File idFileDir = new File(idFileDirectory);
+		if (idFileDir.isDirectory()){
+			String[] files = idFileDir.list(new FilenameFilter() {
+				@Override
+				public boolean accept(File dir, String name) {
+					if (name.endsWith("txt")){
+						return true;
+					}
+					return false;
+				}
+			});
+			return files;
 		}
+		return new String[0];
 	}
 	
 	/**
@@ -57,7 +76,7 @@ public class TweetCorpusDownloader {
 		maxNumPendingTasks = nrThreads * 10;
 	}
 	
-	private static final String UTF8 = "UTF-8";
+	protected static final String UTF8 = "UTF-8";
 	
 	
 	// idsFile: file with tweet IDs, one tweet ID per line

@@ -20,7 +20,7 @@ import java.util.Set;
 public class TweetFieldsResponse {
 
 	public static void main(String[] args) {
-		String responseFile = "responses.txt";//"add a file created from TweetCorpusDownloader";
+		String responseFile = "D:/socialsensor/data/uselections_tweets/aggregate.txt";//"add a file created from TweetCorpusDownloader";
 		TweetFieldsResponse.reportResults(responseFile);
 	}
 	
@@ -111,6 +111,17 @@ public class TweetFieldsResponse {
 	// as well as tweets that were removed or suspended (since there is no chance
 	// of them being downloaded)
 	public static Set<String> readIds(String responseLogFile){
+		return readIds(responseLogFile, 1000);
+	}
+	
+	// return the ids of tweets that satisfy the conditions of code:
+	// - code = 200 -> response.getStatus() == 200
+	// - code = 404 -> response.getStatus() == 404
+	// - code = 0 -> user is suspended
+	// - code = -1 -> is parse error
+	// - code = -2 -> is other error
+	// - code = 1000 -> tweets whose ids have been checked, meaning either code 200 or 404 or user suspended
+	public static Set<String> readIds(String responseLogFile, final int code){
 		BufferedReader reader = null;
 		try {
 			reader = new BufferedReader(new FileReader(responseLogFile));
@@ -122,10 +133,43 @@ public class TweetFieldsResponse {
 		try {
 			while ((line = reader.readLine()) != null){
 				TweetFieldsResponse response = TweetFieldsResponse.fromString(line);
-				if ((response.getStatus() == 200) || 
-						(response.getStatus() == 404) || 
-						response.isSuspended()){
+				switch (code){
+				case -2:
+					if (response.isOtherError()){
+						ids.add(response.getTweet().getId());
+					}
+					break;
+				case -1:
+					if (response.isParseError()){
+						ids.add(response.getTweet().getId());
+					}
+					break;
+				case 0:
+					if (response.isSuspended()){
+						ids.add(response.getTweet().getId());
+					}
+					break;
+				case 200:
+					if (response.getStatus() == 200){
+						ids.add(response.getTweet().getId());
+					}
+					break;
+				case 404:
+					if (response.getStatus() == 404){
+						ids.add(response.getTweet().getId());
+					}
+					break;
+				case 1000:
+					if ((response.getStatus() == 200) || 
+							(response.getStatus() == 404) || 
+							response.isSuspended()){
+						ids.add(response.getTweet().getId());
+					}
+					break;
+				default:
+					// add all ids
 					ids.add(response.getTweet().getId());
+					break;
 				}
 			}
 			reader.close();
@@ -179,6 +223,7 @@ public class TweetFieldsResponse {
 		
 		System.out.println("Success(%): " + (100.0*countSuccess)/nrResponses);
 		System.out.println("Avg. response time: " + totalMsec/nrResponses + "msecs");
+		System.out.println("Total: " + nrResponses);
 		System.out.println("Suspended: " + countSuspended);
 		System.out.println("Parse errors: " + countParseErrors);
 		System.out.println("Other errors: " + countOtherErrors);
