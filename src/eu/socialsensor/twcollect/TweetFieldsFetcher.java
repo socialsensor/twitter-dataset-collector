@@ -51,7 +51,7 @@ public class TweetFieldsFetcher {
 		// extract parsed id
 		String resolvedUrl = response.url().getPath();
 		int lastSlashIdx = resolvedUrl.lastIndexOf('/');
-		String newId = resolvedUrl.substring(lastSlashIdx+1);
+		String originalId = resolvedUrl.substring(lastSlashIdx+1);
 		
 		// extract username
 		String username = doc.select(".user-actions").attr("data-screen-name");
@@ -83,13 +83,13 @@ public class TweetFieldsFetcher {
 		}	
 		
 		TweetFields tweetFields = null;
-		if (tweetId.equals(newId)) {
+		if (tweetId.equals(originalId)) {
 			// original tweet
 			tweetFields = new TweetFields(tweetId, username, 
 					text, publicationTime, numRetweets, numFavorites); 
 		} else {
-			tweetFields = new TweetFields(newId, username,
-					text, publicationTime, numRetweets, numFavorites, tweetId);
+			tweetFields = new TweetFields(tweetId, username,
+					text, publicationTime, numRetweets, numFavorites, originalId);
 		}
 				
 		
