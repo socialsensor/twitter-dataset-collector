@@ -14,18 +14,29 @@ public class TweetFields {
 	private int numRetweets = 0;
 	private int numFavorites = 0;
 
+	// if this is non-null the tweet is a retweet
+	// and the rest of the fields (username, pubTime) refer to the original
+	private final String originalId;
+	
+	// constructor using all fields for an original tweet
+	public TweetFields(String id, String username, String text, String pubTime,
+			int numRetweets, int numFavorites){
+		this(id, username, text, pubTime, numRetweets, numFavorites, null);
+	}
 	
 	// constructor using all fields
 	public TweetFields(String id, String username, String text, String pubTime,
-			int numRetweets, int numFavorites){
+			int numRetweets, int numFavorites, String originalId){
 		this.id = id;
+		this.originalId = originalId;
+		
+		// these fields refer to the original tweet
 		this.username = username;
 		this.text = text;
 		this.pubTime = pubTime;
 		this.numRetweets = numRetweets;
 		this.numFavorites = numFavorites;
 	}
-	
 	// constructor without number of retweets & favorites
 	public TweetFields(String id, String username, String text, String pubTime){
 		this(id, username, text, pubTime, 0, 0);
@@ -51,6 +62,13 @@ public class TweetFields {
 		return numFavorites;
 	}
 	
+	public boolean isRetweeet() {
+		if (originalId != null){
+			return true;
+		} else {
+			return false;
+		}
+	}
 	
 	// Setters (only for retweets and favorites that are mutable)
 	public void setNumRetweets(int numRetweets) {
@@ -68,13 +86,28 @@ public class TweetFields {
 	public String toString() {
 		// serialize in a single-line (check if tab is contained in text)
 		if (text != null && text.contains(SEPARATOR)){
-			return id + SEPARATOR + username + SEPARATOR + 
-					text.replaceAll(SEPARATOR, TAB_ASCII) +
-					pubTime + SEPARATOR + numRetweets + SEPARATOR + numFavorites;
+			return isRetweetCode() + SEPARATOR + id + SEPARATOR + username + 
+					SEPARATOR + text.replaceAll(SEPARATOR, TAB_ASCII) +
+					pubTime + SEPARATOR + numRetweets + SEPARATOR + 
+					numFavorites + SEPARATOR + originalId;
 		} else {
-			return id + SEPARATOR + username + SEPARATOR + 
-					text + SEPARATOR + pubTime + SEPARATOR + 
-					numRetweets + SEPARATOR + numFavorites;
+			return isRetweetCode() + SEPARATOR + id + SEPARATOR + username + 
+					SEPARATOR + text + SEPARATOR + pubTime + SEPARATOR + numRetweets + 
+					SEPARATOR + numFavorites + SEPARATOR + originalId;
+		}
+	}
+	
+	// possible values
+	// O: original
+	// R: retweet
+	// N: not available
+	private String isRetweetCode(){
+		if (text == null){
+			return "N";
+		} else if (isRetweeet()){
+			return "R";
+		} else {
+			return "O";
 		}
 	}
 	
@@ -84,13 +117,19 @@ public class TweetFields {
 		// id = parts[0], username = parts[1], text = parts[2], publicationTime = parts[3], 
 		// numRetweets = parse(parts[4]), numFavorites = parse(parts[5])
 		// make sure you change tab character
-		String text = parts[2].replaceAll(TAB_ASCII, SEPARATOR);
-
-		return new TweetFields(parts[0], parts[1], text, parts[3], 
-				Integer.parseInt(parts[4]), Integer.parseInt(parts[5]));
+		String text = parts[3].replaceAll(TAB_ASCII, SEPARATOR);
+		String originalId = parts[7];
+		if (parts[7].equals(NULL_STRING)){
+			originalId = null;
+		}
+		if (text.equals(NULL_STRING)){
+			text = null;
+		}
+		return new TweetFields(parts[1], parts[2], text, parts[4], 
+				Integer.parseInt(parts[5]), Integer.parseInt(parts[6]), originalId);
 		
 	}
-	
+	protected static final String NULL_STRING = "null";
 	
 	// Override: hashCode and equals -> A TweetFields is identified by its id.
 	@Override

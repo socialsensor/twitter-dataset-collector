@@ -48,6 +48,11 @@ public class TweetFieldsFetcher {
 			return createParseErrorResponse(tweetId, time0);
 		}
 		
+		// extract parsed id
+		String resolvedUrl = response.url().getPath();
+		int lastSlashIdx = resolvedUrl.lastIndexOf('/');
+		String newId = resolvedUrl.substring(lastSlashIdx+1);
+		
 		// extract username
 		String username = doc.select(".user-actions").attr("data-screen-name");
 		
@@ -77,8 +82,16 @@ public class TweetFieldsFetcher {
 			numFavorites = Integer.parseInt(numFavoritesEl.text().replaceAll(",",""));
 		}	
 		
-		TweetFields tweetFields = new TweetFields(tweetId, username, text, 
-				publicationTime, numRetweets, numFavorites);
+		TweetFields tweetFields = null;
+		if (tweetId.equals(newId)) {
+			// original tweet
+			tweetFields = new TweetFields(tweetId, username, 
+					text, publicationTime, numRetweets, numFavorites); 
+		} else {
+			tweetFields = new TweetFields(newId, username,
+					text, publicationTime, numRetweets, numFavorites, tweetId);
+		}
+				
 		
 		return createResponse(tweetFields, response.statusCode(), time0, false);
 	}

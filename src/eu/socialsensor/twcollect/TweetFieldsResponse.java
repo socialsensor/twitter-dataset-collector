@@ -20,7 +20,7 @@ import java.util.Set;
 public class TweetFieldsResponse {
 
 	public static void main(String[] args) {
-		String responseFile = "D:/socialsensor/data/uselections_tweets/aggregate.txt";//"add a file created from TweetCorpusDownloader";
+		String responseFile = "responses.txt";//"D:/socialsensor/data/uselections_tweets/aggregate.txt";//"add a file created from TweetCorpusDownloader";
 		TweetFieldsResponse.reportResults(responseFile);
 	}
 	
@@ -78,17 +78,20 @@ public class TweetFieldsResponse {
 
 	// de-serialize from an appropriately formatted String
 	public static TweetFieldsResponse fromString(String tweetFieldsResponseInLine){
+		
 		String[] parts = tweetFieldsResponseInLine.split(SEPARATOR);
-
-		if (parts[5].equals("null")){
-			return new TweetFieldsResponse(null, Integer.parseInt(parts[0]), 
+		
+		if (parts[7].equals("null")){
+			// tweet is not available
+			return new TweetFieldsResponse(new TweetFields(parts[6], null, null, null), Integer.parseInt(parts[0]), 
 					Integer.parseInt(parts[4]), Boolean.parseBoolean(parts[1]),
 					Boolean.parseBoolean(parts[2]), Boolean.parseBoolean(parts[3]));
 		} else {
 			// recreate TweetFields string and parse it with the utility method of TweetFields
-			TweetFields tweetFields = TweetFields.fromString(parts[5] + 
-					SEPARATOR + parts[6] + SEPARATOR + parts[7] + SEPARATOR + 
-					parts[8] + SEPARATOR + parts[9] + SEPARATOR + parts[10]);
+			TweetFields tweetFields = TweetFields.fromString(
+					parts[5] + SEPARATOR + parts[6] + 
+					SEPARATOR + parts[7] + SEPARATOR + parts[8] + SEPARATOR + 
+					parts[9] + SEPARATOR + parts[10] + SEPARATOR + parts[11] + SEPARATOR + parts[12]);
 			return new TweetFieldsResponse(tweetFields, Integer.parseInt(parts[0]), 
 					Integer.parseInt(parts[4]), Boolean.parseBoolean(parts[1]), 
 					Boolean.parseBoolean(parts[2]), Boolean.parseBoolean(parts[3]));
@@ -189,6 +192,8 @@ public class TweetFieldsResponse {
 		}
 		
 		int countSuccess = 0;
+		int countOriginal = 0;
+		int countRetweets = 0;
 		int countSuspended = 0;
 		int countParseErrors = 0;
 		int countOtherErrors = 0;
@@ -208,6 +213,14 @@ public class TweetFieldsResponse {
 				if (response.isParseError()){ countParseErrors++; }
 				if (response.isOtherError()){ countOtherErrors++; }
 				
+				if (response.getTweet().isRetweeet()) {
+					countRetweets++;
+				}
+				if (response.getStatus() == 200 && (!response.getTweet().isRetweeet()
+						&& response.getTweet().getText()!=null)){
+					countOriginal++;
+				}
+				
 				Integer statusInMap = statusMap.get(response.getStatus());
 				if (statusInMap == null){
 					statusMap.put(response.getStatus(), 1);
@@ -224,6 +237,8 @@ public class TweetFieldsResponse {
 		System.out.println("Success(%): " + (100.0*countSuccess)/nrResponses);
 		System.out.println("Avg. response time: " + totalMsec/nrResponses + "msecs");
 		System.out.println("Total: " + nrResponses);
+		System.out.println("Original: " + countOriginal);
+		System.out.println("Retweets: " + countRetweets);
 		System.out.println("Suspended: " + countSuspended);
 		System.out.println("Parse errors: " + countParseErrors);
 		System.out.println("Other errors: " + countOtherErrors);
