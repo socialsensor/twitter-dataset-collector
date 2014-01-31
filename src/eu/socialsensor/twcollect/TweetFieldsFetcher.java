@@ -72,14 +72,14 @@ public class TweetFieldsFetcher {
 		Elements numRetweetsEl 	= doc.select(".stats .js-stat-retweets a strong");
 		int numRetweets = 0;
 		if (numRetweetsEl.text().length()>0) {
-			numRetweets = Integer.parseInt(numRetweetsEl.text().replaceAll(",",""));
+			numRetweets = Integer.parseInt(numRetweetsEl.text().replaceAll(String.valueOf((char)160),"").replaceAll(",",""));
 		}
 		
 		// favorites (if available)
 		Elements numFavoritesEl	= doc.select(".stats .js-stat-favorites a strong");
 		int numFavorites = 0;
 		if (numFavoritesEl.text().length()>0){
-			numFavorites = Integer.parseInt(numFavoritesEl.text().replaceAll(",",""));
+			numFavorites = Integer.parseInt(numFavoritesEl.text().replaceAll(String.valueOf((char)160),"").replaceAll(",",""));
 		}	
 		
 		TweetFields tweetFields = null;
