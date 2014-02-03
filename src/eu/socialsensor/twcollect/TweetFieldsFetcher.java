@@ -1,6 +1,8 @@
 package eu.socialsensor.twcollect;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.jsoup.Connection;
 import org.jsoup.HttpStatusException;
@@ -57,16 +59,41 @@ public class TweetFieldsFetcher {
 		String username = doc.select(".user-actions").attr("data-screen-name");
 		
 		// extract text
-		Elements textEl = doc.select(".js-tweet-text");
+		Elements textEl = doc.select(".js-tweet-text"); // this is not the most appropriate way to check
 		if (textEl == null || textEl.first() == null){
 			// is the user suspension the only reason for getting a null text?
 			System.err.println(twitterURL + " (suspeneded)");
 			return createResponse(new TweetFields(tweetId, null, null, null), response.statusCode(), time0, true);
 		}
 		String text = textEl.first().text();
+		Elements mainEl = doc.select(".permalink-tweet");
+		if (mainEl != null && mainEl.first() != null){
+			Elements inEl = mainEl.first().select(".js-tweet-text");
+			if (inEl != null && inEl.first() != null){
+				text = inEl.first().text();	
+			}
+		}
 		
 		// should always be there
 		String publicationTime = doc.select(".tweet-timestamp").attr("title");
+		
+		// get tweets to which this tweet replies (if available)
+		Elements repEl = doc.select(".permalink-in-reply-tos");
+		String[] responseTos = null;
+		if (repEl != null && repEl.first() != null){
+			List<String> respIds = new ArrayList<String>();
+			Elements inEl = repEl.first().select(".simple-tweet");
+			if (inEl != null){
+				for (int i = 0; i < inEl.size(); i++){
+					respIds.add(inEl.get(i).attr("data-tweet-id"));
+				}
+			}
+			responseTos = new String[respIds.size()];
+			for (int i = 0; i < respIds.size(); i++){
+				responseTos[i] = respIds.get(i);
+			}
+		}
+
 		
 		// retweets (if available)
 		Elements numRetweetsEl 	= doc.select(".stats .js-stat-retweets a strong");
@@ -86,10 +113,10 @@ public class TweetFieldsFetcher {
 		if (tweetId.equals(originalId)) {
 			// original tweet
 			tweetFields = new TweetFields(tweetId, username, 
-					text, publicationTime, numRetweets, numFavorites); 
+					text, publicationTime, numRetweets, numFavorites, null, responseTos); 
 		} else {
 			tweetFields = new TweetFields(tweetId, username,
-					text, publicationTime, numRetweets, numFavorites, originalId);
+					text, publicationTime, numRetweets, numFavorites, originalId, null);
 		}
 				
 		
