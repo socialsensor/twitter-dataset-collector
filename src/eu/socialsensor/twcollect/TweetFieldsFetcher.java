@@ -66,16 +66,19 @@ public class TweetFieldsFetcher {
 			return createResponse(new TweetFields(tweetId, null, null, null), response.statusCode(), time0, true);
 		}
 		String text = textEl.first().text();
+		
+		// should always be there, but not correct for response tweets
+		String publicationTime = doc.select(".tweet-timestamp").attr("title");		
+		
 		Elements mainEl = doc.select(".permalink-tweet");
 		if (mainEl != null && mainEl.first() != null){
 			Elements inEl = mainEl.first().select(".js-tweet-text");
 			if (inEl != null && inEl.first() != null){
 				text = inEl.first().text();	
 			}
+			// get correct publication time
+			publicationTime = mainEl.select(".metadata").first().text();
 		}
-		
-		// should always be there
-		String publicationTime = doc.select(".tweet-timestamp").attr("title");
 		
 		// get tweets to which this tweet replies (if available)
 		Elements repEl = doc.select(".permalink-in-reply-tos");
