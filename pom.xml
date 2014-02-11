@@ -17,6 +17,7 @@
         	<distribution>repo</distribution>
   		</license>
   </licenses>
+  
   <dependencies>
   	<dependency>
 		<!-- jsoup HTML parser library @ http://jsoup.org/ -->
@@ -24,6 +25,16 @@
 		<artifactId>jsoup</artifactId>
 		<version>1.7.2</version>
   	</dependency>
+  	<dependency>
+        <groupId>org.twitter4j</groupId>
+        <artifactId>twitter4j-core</artifactId>
+        <version>3.0.5</version>
+    </dependency>
+    <dependency>
+        <groupId>org.twitter4j</groupId>
+        <artifactId>twitter4j-stream</artifactId>
+        <version>3.0.5</version>
+    </dependency>
   </dependencies>
   <build>
     <sourceDirectory>src</sourceDirectory>
