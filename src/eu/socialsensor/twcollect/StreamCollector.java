@@ -30,7 +30,10 @@ public class StreamCollector {
 		
 		long[] seeds = FileUtil.convertStringToLongs(
 				FileUtil.readTokensFromFile("seeds.txt"));
+		String[] keywords = FileUtil.readTokensFromFile("keywords.txt");
+		
 		FilterQuery filter = new FilterQuery(seeds);
+		filter.track(keywords);
 		collector.startFilter(filter);
 	}
 	
