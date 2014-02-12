@@ -17,7 +17,7 @@ The same arguments (with the exception of `nrThreads`) can be used with the sing
     void downloadIds(String idsFile, String responsesLogFile, final boolean resume)
 
 <h3>Twitter4j wrapper</h3>
-To make use of the Twitter Streaming API, you would need to use the Twitter4j wrapper class `eu.socialsensor.twcollect.StreamCollector`. To do so, you first need to fill in your API credentials in the `twitter4j.properties` file and then run the `main` method of the class. By default the class makes use of a predefined list of Twitter user ids (from the file `seeds.txt` as a filter to the Streaming API. Note that the shutdown hook of the class may not work properly (and therefore fail to finalize resources), e.g. when the `main` method is invoked and terminated from within the eclipse IDE.  
+To make use of the Twitter Streaming API, you would need to use the Twitter4j wrapper class `eu.socialsensor.twcollect.StreamCollector`. To do so, you first need to fill in your API credentials in the `twitter4j.properties` file and then run the `main` method of the class. By default the class makes use of a predefined list of Twitter user ids (from the file `seeds.txt` as well as a set of keywords (from the file `keywords.txt`) as filters to the Streaming API. Note that the shutdown hook of the class may not work properly (and therefore fail to finalize resources), e.g. when the `main` method is invoked and terminated from within the eclipse IDE.  
 
 <h2><u>Technical considerations</u></h2>
 
