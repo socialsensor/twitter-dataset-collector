@@ -26,6 +26,7 @@ public class StreamCollector {
 	public static void main(String[] args) throws TwitterException, IOException{
 	    
 		StreamCollector collector = new StreamCollector();
+		collector.setMaxJsonFileSize(100*1024); // 100MB batches
 		collector.open("tweets.json");
 		
 		long[] seeds = FileUtil.convertStringToLongs(
@@ -40,31 +41,38 @@ public class StreamCollector {
 	
 	protected BufferedWriter writer = null;
 	protected StatusListener listener = null;
+	protected long maxJsonFileSize = 0; // (in KB) if >0, then the collector tries to create output json files 
+								       // of approximately that size (i.e. by creating multiple files)
+	protected long currentFileSize = 0; // counts the size of the currently opened file
+	protected int fileCounter = 0; // counts the number of files written so far
 	
-	protected void open(String tweetDump) {
-		try {
-			writer = new BufferedWriter(
-					new OutputStreamWriter(new FileOutputStream(tweetDump), FileUtil.UTF8));
-		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
+	// set maximum JSON file size (in KB)
+	public void setMaxJsonFileSize(long fileSize){
+		this.maxJsonFileSize = fileSize;
+	}
+
+	
+	protected void open(final String tweetDump) {
+		openWriter(tweetDump + ".0");
 		
 		listener = new StatusListener(){
 			public void onStatus(Status status) {
 				try {
-					writer.append(DataObjectFactory.getRawJSON(status));
+					String line = DataObjectFactory.getRawJSON(status);
+					writer.append(line);
 					writer.newLine();
-				} catch (IOException e){
-					e.printStackTrace();
-					if (writer != null){
-						try {
-							writer.close();
-						} catch (IOException e1) {
-							e1.printStackTrace();
+					currentFileSize += line.length();
+					if (maxJsonFileSize > 0){
+						if (currentFileSize >= maxJsonFileSize*1024){
+							closeWriter();
+							fileCounter++;
+							currentFileSize = 0;
+							openWriter(tweetDump + "." + fileCounter);
 						}
 					}
+				} catch (IOException e){
+					e.printStackTrace();
+					closeWriter();
 				}
 			}
 			public void onDeletionNotice(StatusDeletionNotice statusDeletionNotice) {}
@@ -90,6 +98,22 @@ public class StreamCollector {
 	}
 	
 	protected void close(){
+		closeWriter();
+	}
+	
+	
+	protected void openWriter(String file){
+		try {
+			writer = new BufferedWriter(
+					new OutputStreamWriter(new FileOutputStream(file), FileUtil.UTF8));
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	protected void closeWriter(){
 		if (writer != null){
 			try {
 				writer.close();
@@ -98,7 +122,6 @@ public class StreamCollector {
 			}
 		}
 	}
-	
 	
 	/**
 	 * Class in case system is shutdown: Responsible to close all services 
