@@ -20,7 +20,7 @@ import java.util.Set;
 public class TweetFieldsResponse {
 
 	public static void main(String[] args) {
-		String responseFile = "responses.txt";//"D:/socialsensor/data/uselections_tweets/aggregate.txt";//"add a file created from TweetCorpusDownloader";
+		String responseFile = "D:/socialsensor/code/twitter-dataset-collector/snow14_devset_tweets_v2.txt";//"responses.txt";//"D:/socialsensor/data/uselections_tweets/aggregate.txt";//"add a file created from TweetCorpusDownloader";
 		TweetFieldsResponse.reportResults(responseFile);
 	}
 	
@@ -194,6 +194,7 @@ public class TweetFieldsResponse {
 		int countSuccess = 0;
 		int countOriginal = 0;
 		int countRetweets = 0;
+		int countResponses = 0;
 		int countSuspended = 0;
 		int countParseErrors = 0;
 		int countOtherErrors = 0;
@@ -215,6 +216,9 @@ public class TweetFieldsResponse {
 				
 				if (response.getTweet().isRetweeet()) {
 					countRetweets++;
+				}
+				if (response.getTweet().isReply()) {
+					countResponses++;
 				}
 				if (response.getStatus() == 200 && (!response.getTweet().isRetweeet()
 						&& response.getTweet().getText()!=null)){
@@ -239,6 +243,7 @@ public class TweetFieldsResponse {
 		System.out.println("Total: " + nrResponses);
 		System.out.println("Original: " + countOriginal);
 		System.out.println("Retweets: " + countRetweets);
+		System.out.println("Responses: " + countResponses);
 		System.out.println("Suspended: " + countSuspended);
 		System.out.println("Parse errors: " + countParseErrors);
 		System.out.println("Other errors: " + countOtherErrors);
