@@ -6,6 +6,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.util.HashSet;
+import java.util.Set;
 
 public class FileUtil {
 
@@ -49,6 +51,39 @@ public class FileUtil {
 				}
 			}
 			return new String[0];
+		} 
+	}
+	
+	public static Set<String> readIds(String file){
+		Set<String> ids = new HashSet<>();
+		BufferedReader reader = null;
+
+		try {
+			reader = new BufferedReader(new InputStreamReader(
+					new FileInputStream(file), UTF8));
+			String line = null;
+			while ((line = reader.readLine())!= null){
+				String[] parts = line.split("[\t\\s]");
+				ids.add(parts[0]);
+			}
+			reader.close();
+			return ids;
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+			return ids;
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			return ids;
+		} catch (IOException e){
+			e.printStackTrace();
+			if (reader != null){
+				try {
+					reader.close();
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+			}
+			return ids;
 		} 
 	}
 }
