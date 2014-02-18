@@ -55,7 +55,7 @@ public class FileUtil {
 	}
 	
 	public static Set<String> readIds(String file){
-		Set<String> ids = new HashSet<>();
+		Set<String> ids = new HashSet<String>();
 		BufferedReader reader = null;
 
 		try {
