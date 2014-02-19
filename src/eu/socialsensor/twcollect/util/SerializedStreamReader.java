@@ -44,14 +44,17 @@ public class SerializedStreamReader {
 			jsonFileList.add(files[i].getCanonicalPath());
 		}
 		
+		final long minTime = 1392660000000L;
+		final long maxTime = 1392746400000L;
+		
 		//printJsonFileSummary(jsonFileList);
-		extractSubsetOfTweetFields(jsonFileList, "rehearsal_meta.txt", new StatusTransformer() {
+		extractSubsetOfTweetFields(jsonFileList, "rehearsal_meta_filtered.txt", new StatusTransformer() {
 			
 			@Override
 			public String extractLine(Status status) {
 				String id = String.valueOf(status.getId());
 				String timestamp = String.valueOf(status.getCreatedAt().getTime());
-				String username = status.getUser().getName();
+				String username = status.getUser().getScreenName();
 				return id + "\t" + timestamp + "\t" + username;
 			}
 			
@@ -60,13 +63,23 @@ public class SerializedStreamReader {
 				// we don't care about this
 				return new HashMap<String, String>();
 			}
+		}, new StatusFilterer() {
+			
+			@Override
+			public boolean acceptStatus(Status status) {
+				if (status.getCreatedAt().getTime() >= minTime &&
+						status.getCreatedAt().getTime() <= maxTime){
+					return true;
+				}
+				return false;
+			}
 		});
 		
 		
 	}
 	
 	public static void extractSubsetOfTweetFields(List<String> jsonFiles, String outputFile,
-			 StatusTransformer transformer) throws IOException, TwitterException {
+			 StatusTransformer transformer, StatusFilterer filterer) throws IOException, TwitterException {
 		
 		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
 				new FileOutputStream(outputFile), FileUtil.UTF8));
@@ -78,8 +91,10 @@ public class SerializedStreamReader {
 			String line = null;
 			while ((line = reader.readLine())!= null){
 				Status status = DataObjectFactory.createStatus(line);
-				writer.append(transformer.extractLine(status));
-				writer.newLine();
+				if (filterer.acceptStatus(status)){
+					writer.append(transformer.extractLine(status));
+					writer.newLine();
+				}
 			}
 			reader.close();
 			writer.flush();
